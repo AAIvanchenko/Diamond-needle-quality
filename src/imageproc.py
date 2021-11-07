@@ -19,7 +19,8 @@ def draw_hist_gray(img_gray: np.ndarray) -> None:
     height, weight = img_gray.shape[:]
     pixel_sequence = img_gray.reshape([height * weight, ])
     number_bins = 256
-    histogram, bins, patch = plt.hist(pixel_sequence, number_bins, facecolor="black", histtype="bar")
+    histogram, bins, patch = plt.hist(pixel_sequence, number_bins,
+                                      facecolor="black", histtype="bar")
     plt.xlabel("Интенсивность серого")
     plt.ylabel("Количество пикселей")
     plt.axis([0, 255, 0, np.max(histogram)])
@@ -108,18 +109,20 @@ def filter_strong_clarity(img: np.ndarray) -> np.ndarray:
     return img_filter
 
 
-def selective_filter_clarity(filter_clarity: Callable[np.ndarray, np.ndarray], img: np.ndarray) -> np.ndarray:
+def selective_filter_clarity(filter_clarity: Callable[np.ndarray, np.ndarray], img: np.ndarray,
+                             min_num_blur: int = 30) -> np.ndarray:
     """
     Выборочная фильтрацая изображений.
-        У картинки будет повышаться резкость, если степень размыточти меньше заданного минимального значения.
+        У картинки будет повышаться резкость, если степень размыточти
+        меньше заданного минимального значения.
 
     :param filter_clarity: Функция, которая повышает резкость изображения.
     :param img: Исходное цветное изображение или ЧБ изображение.
+    :param min_num_blur: Минимальное число размыточти на картинке.
 
     :return: Цветное или ЧБ изображение с примененным фильтром.
     """
     num_blur = cv.Laplacian(img, cv.CV_64F).var()
-    min_num_blur = 30
 
     if num_blur < min_num_blur:
         filter_img = filter_clarity(img)
