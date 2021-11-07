@@ -133,3 +133,5 @@ dmypy.json
 
 # Служебные папки
 row_dataset
+venv
+.idea
