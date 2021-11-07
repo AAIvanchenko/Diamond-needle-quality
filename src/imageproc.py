@@ -109,7 +109,7 @@ def filter_strong_clarity(img: np.ndarray) -> np.ndarray:
     return img_filter
 
 
-def selective_filter_clarity(filter_clarity: Callable[np.ndarray, np.ndarray], img: np.ndarray,
+def selective_filter_clarity(filter_clarity: Callable[[np.ndarray], np.ndarray], img: np.ndarray,
                              min_num_blur: int = 30) -> np.ndarray:
     """
     Выборочная фильтрацая изображений.
