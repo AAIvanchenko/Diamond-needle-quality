@@ -13,11 +13,9 @@ def draw_hist_gray(img_gray: np.ndarray) -> None:
     """
     Рисует гистограмму распределения серого на картинке.
 
-    :param
-        img_gray: ЧБ изображение.
+    :param: img_gray: ЧБ изображение.
 
-    :return
-        None
+    :return: None
     """
     height, weight = img_gray.shape[:]
     pixel_sequence = img_gray.reshape([height * weight, ])
@@ -33,11 +31,9 @@ def normalize_hist(img_gray: np.ndarray) -> np.ndarray:
     """
     Нормализация гистограммы распределения серого на картинке.
 
-    :param
-        img_gray: ЧБ изображение.
+    :param: img_gray: ЧБ изображение.
 
-    :return
-        out: Нормализованное ЧБ изображение.
+    :return: out: Нормализованное ЧБ изображение.
     """
     i_min, i_max = cv.minMaxLoc(img_gray)[:2]  # диапазон серого на картинке
     o_min, o_max = 0, 255  # диапазон уровней серого
@@ -60,11 +56,9 @@ def hist_equal(img_gray: np.ndarray) -> None:
         4.Циклически выводить уровень серого каждого пикселя изображения в соответствии с соотношением отображения
     В рамках данной функции использовалась встроенная в библиотеку OpenCV функция equalizeHist().
 
-    :param
-        img_gray: ЧБ изображение.
+    :param: img_gray: ЧБ изображение.
 
-    :return:
-        None
+    :return: None
     """
     return cv.equalizeHist(img_gray)
 
@@ -81,11 +75,9 @@ def additive_correct(img: np.ndarray) -> np.ndarray:
 
      Во избежание появления шума предлагается «Ограничение контраста» (Contrast Limiting (clipLimit))
 
-    :param
-        img: Цветное или ЧБ изображение.
+    :param: img: Цветное или ЧБ изображение.
 
-    :return:
-        out: ЧБ изображение с адаптивной коррекцией гистограммы распределения серого.
+    :return: out: ЧБ изображение с адаптивной коррекцией гистограммы распределения серого.
     """
     shape_rgb_img = 3
 
@@ -104,11 +96,9 @@ def filter_strong_clarity(img: np.ndarray) -> np.ndarray:
         Матрица фильтра выглядит следующим образом: [-1, -1, -1]
                                                     [-1, 9, -1]
                                                     [-1, -1, -1]
-    :param
-        img: Цветная картинка.
+    :param: img: Цветная картинка.
 
-    :return:
-        img_filter: Цветная картинка с примененным фильтром.
+    :return: img_filter: Цветная картинка с примененным фильтром.
     """
     kernel = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
     img_filter = cv.filter2D(img, -1, kernel)
@@ -120,13 +110,11 @@ def selective_filter_clarity(filter_clarity: callable, img: np.ndarray) -> np.nd
     Выборочная фильтрацая изображений.
         У картинки будет повышаться резкость, если степень размыточти меньше заданного минимального значения.
 
-     :param
-        filter_clarity: Функция, которая повышает резкость изображения.
-        img: Исходное цветное изображение или ЧБ изображение.
+    :param: filter_clarity: Функция, которая повышает резкость изображения.
+    :param: img: Исходное цветное изображение или ЧБ изображение.
 
-    :return:
-        filter_img: Цветное или ЧБ изображение с примененным фильтром.
-        img: Цветное изображение без фильтра.
+    :return: filter_img: Цветное или ЧБ изображение с примененным фильтром.
+    :return: img: Цветное изображение без фильтра.
     """
     num_blur = cv.Laplacian(img, cv.CV_64F).var()
     min_num_blur = 30
@@ -143,11 +131,9 @@ def filter_bilateral(img: np.ndarray) -> np.ndarray:
     """
     Фильтр размытия изображения - двусторонняя фильтрация.
 
-    :param
-        img: Исходное цветное изображение.
+    :param: img: Исходное цветное изображение.
 
-    :return:
-        img_filter: Цветное изображение с примененным фильтром.
+    :return: img_filter: Цветное изображение с примененным фильтром.
     """
     diameter = 9  # Диаметр каждой окрестности пикселя, используемой во время фильтрации
     sigma_color = 75
@@ -160,11 +146,9 @@ def filter_gaussian_blur(img: np.ndarray) -> np.ndarray:
     """
     Фильтр размытия изображения - гауссовская фильтрация.
 
-    :param
-        img: Исходное цветное изображение.
+    :param: img: Исходное цветное изображение.
 
-    :return:
-        img_filter: Цветное изображение с примененным фильтром.
+    :return: img_filter: Цветное изображение с примененным фильтром.
     """
     height_kernel, weight_kernel = 5, 5
     sigma_x = 0
@@ -176,11 +160,9 @@ def filter_averag_img(img: np.ndarray) -> np.ndarray:
     """
     Фильтр размытия - усерднение изображения.
 
-    :param
-        img: Исходное цветное изображение.
+    :param: img: Исходное цветное изображение.
 
-    :return:
-        img_filter: Цветное изображение с примененным фильтром.
+    :return: img_filter: Цветное изображение с примененным фильтром.
     """
     height_kernel, weight_kernel = 5, 5
     img_filter = cv.blur(img, (height_kernel, weight_kernel))
@@ -191,11 +173,10 @@ def filter_add_weight(img: np.ndarray) -> np.ndarray:
     """
     Фильтр повышает резкость изображения.
         Вычисляет взвешенную сумму двух массивов.
-    :param
-        img: Цветная картинка.
 
-    :return:
-        img_filter: Цветная картинка с примененным фильтром.
+    :param: img: Цветная картинка.
+
+    :return: img_filter: Цветная картинка с примененным фильтром.
     """
     alpha = 4
     beta = -4
