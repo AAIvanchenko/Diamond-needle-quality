@@ -78,9 +78,9 @@ class Linear:
         """
         Построение объекта Line.
 
-        :arg a: Параметр 'a' для линии из уравнения прямой
+        :param a: Параметр 'a' для линии из уравнения прямой
                  y = ax + b.
-        :arg b: Параметр 'b' для линии из уравнения прямой
+        :param b: Параметр 'b' для линии из уравнения прямой
                  y = ax + b.
 
         :return: Line(a, b).
@@ -153,23 +153,39 @@ class LinearInterpolate:
         self.model = LinearRegression(normalize = True, n_jobs=-1)
         self.fit(df["x"].to_numpy(), df["y"].to_numpy())
 
-    def fit(self, x_list: np.ndarray, y_list: np.ndarray):
+    def fit(self, x_list: list, y_list: list,
+            loss_zone: float = 0.6, loss_ratio: int = 4):
         """
         Обучение модели ленейной интерполяции.
 
         :param x_list: массив точек признаков.
         :param y_list: массив значений таргетов.
+        :param loss_zone: Параметр, отражающий размер зоны забвения в
+                          процентах. Т.е. насколько далеко от края
+                          изображения точки начнут отсеиваться.
+                          Находится в пределах от 0.1 до 0.8.
+        :param loss_ratio: Параметр, отражающий силу отсеиваться точек
+                           в зоне забвения.
+                           Задаётся целым числом от 3 до 20.
         """
         # Откинем лишние точки по мере их удалённости от наконечкика
         l = len(x_list)
         y_list_new = []
         x_list_new = []
         if y_list[0] < y_list[-1]: # если левая граница
-            y_list_new = np.hstack([y_list[:round(l*0.3):4], y_list[round(l*0.3):round(l*0.6):2], y_list[round(l*0.6)::1]])
-            x_list_new = np.hstack([x_list[:round(l*0.3):4], x_list[round(l*0.3):round(l*0.6):2], x_list[round(l*0.6)::1]])
+            y_list_new = np.hstack([y_list[:round(l*(loss_zone/2)):loss_ratio],
+                y_list[round(l*(loss_zone/2)):round(l*loss_zone):math.ceil(loss_ratio/2)],
+                y_list[round(l*loss_zone)::1]])
+            x_list_new = np.hstack([x_list[:round(l*(loss_zone/2)):loss_ratio],
+                x_list[round(l*(loss_zone/2)):round(l*loss_zone):math.ceil(loss_ratio/2)],
+                x_list[round(l*loss_zone)::1]])
         else:                      # если правая граница
-            y_list_new = np.hstack([y_list[:round(l*0.4):1], y_list[round(l*0.7):round(l*0.6):2], y_list[round(l*0.7)::4]])
-            x_list_new = np.hstack([x_list[:round(l*0.4):1], x_list[round(l*0.7):round(l*0.6):2], x_list[round(l*0.7)::4]])
+            y_list_new = np.hstack([y_list[:round(l*(1-loss_zone)):1],
+                y_list[round(l*(1-loss_zone)):round(l*(1-loss_zone/2)):math.ceil(loss_ratio/2)],
+                y_list[round(l*(1-loss_zone/2))::loss_ratio]])
+            x_list_new = np.hstack([x_list[:round(l*(1-loss_zone)):1],
+                x_list[round(l*(1-loss_zone)):round(l*(1-loss_zone/2)):math.ceil(loss_ratio/2)],
+                x_list[round(l*(1-loss_zone/2))::loss_ratio]])
         # Обучаем модель
         self.model.fit(x_list_new.reshape(-1, 1), y_list_new.reshape(-1, 1))
 
