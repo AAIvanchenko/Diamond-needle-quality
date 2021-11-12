@@ -12,7 +12,7 @@ from typing import List
 from matplotlib import pyplot as plt
 
 
-def read_path(name_path: str = '..\\dataset\\zoom_needle_no_background.csv') -> List[str]:
+def read_path(name_path: str) -> List[str]:
     """
     Сохранение путей до картинок в таблицу.
 
@@ -20,7 +20,7 @@ def read_path(name_path: str = '..\\dataset\\zoom_needle_no_background.csv') -> 
 
     :return: Список путей до каждой картинки.
     """
-    list_img = pd.DataFrame(pd.read_csv(name_path, sep=";"))
+    list_img = pd.read_csv(name_path, sep=";")
     list_path_img = list_img["path"]
     return list_path_img
 
@@ -29,12 +29,10 @@ def read_img(path_img: str) -> np.ndarray:
     """
     Чтение картинки для дальнейшей работы.
 
-    :param path_img: Путь полученный при помощи функции read_path()
-    для одной картинки.
+    :param path_img: Полный путь до картинки.
 
     :return: Пиксельное представление картинки в формате RGB.
     """
-    path_img = '../dataset/' + path_img
     img = cv.imread(path_img, 1)
     return img
 
