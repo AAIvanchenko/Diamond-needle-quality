@@ -9,7 +9,7 @@
 
 # Импортируем стандартные библиотеки
 import math
-from typing import Typle
+from typing import Tuple
 from collections.abc import Callable
 
 # Импортируем сторонние библиотеки
@@ -25,14 +25,15 @@ class Line:
     Класс линии.
 
     В классе содержатся параметры линии (a, b), а также метод
-    value для вычисления y = ax + b.
+    value для вычисления
+    :math: 'y =  \\alpha x +  \\beta'.
 
     СЛУЖЕБНЫЙ
 
-    :arg a: Параметр 'a' для линии из уравнения прямой
-             y = ax + b.
-    :arg b: Параметр 'b' для линии из уравнения прямой
-             y = ax + b.
+    :arg a: Параметр 'alpha' для линии из уравнения прямой
+             :math: 'alpha =  \\alpha x +  \\beta'.
+    :arg b: Параметр 'beta' для линии из уравнения прямой
+             :math: 'y =  \\alpha x +  \\beta'.
     """
     def __init__(self, a: float, b: float):
         self.a = a
@@ -48,47 +49,47 @@ class Line:
         """
         return self.a * x + self.b
 
+    def angle(self) -> float:
+        """
+        Вычисление угла между прямой и осью абсцисс (ОХ).
 
-class Linear:
+        :return: угол между прямой и осью абсцисс.
+        """
+        angle = math.degrees(math.atan(self.a))
+        if angle < 0:
+            angle = angle + 180
+        return angle
+
+
+class ContourLine:
     """
     Класс, содержащий линии, описывающие границы иглы.
 
     В классе содержатся 3 прямые, описывающие границы иглы, а также
     методы работы с ними.
+    Стоит отметить, что на картинке левая и правая линия меняются
+    местами, т.к. начало координат у картинки слева вверху.
 
     СЛУЖЕБНЫЙ
 
-    :arg a1: Параметр 'a' для левой границы из уравнения прямой
-             y = ax + b.
-    :arg b1: Параметр 'b' для левой границы из уравнения прямой
-             y = ax + b.
-    :arg a2: Параметр 'a' для правой границы из уравнения прямой
-             y = ax + b.
-    :arg b2: Параметр 'b' для правой границы из уравнения прямой
-             y = ax + b.
-    :arg y_max: Параметр 'b' для горизонтальной границы из уравнения
-                прямой y = 0x + b.
+    :arg left: Кортеж, содержащий параметр 'alpha' и 'beta'
+               для левой границы из уравнения прямой
+               :math: 'y =  \\alpha x +  \\beta'.
+    :arg right: Кортеж, содержащий параметр 'alpha' и 'beta'
+               для правой границы из уравнения прямой
+               :math: 'y =  \\alpha x +  \\beta'.
+    :arg horizontal: Кортеж, содержащий параметр 'alpha' и 'beta'
+               для горизонтальной границы из уравнения прямой
+               :math: 'y =  \\alpha x +  \\beta'.
     """
-    def __init__(self, a1: float, b1: float, a2: float, b2: float, y_max: float):
-        self.left_line = self.__line(a1, b1)
-        self.right_line = self.__line(a2, b2)
-        self.horizontal_line = self.__line(0, y_max)
+    def __init__(self, left: Tuple[float, float],
+                       right: Tuple[float, float],
+                       horizontal: Tuple[float, float]):
+        self.left_line = Line(*left)
+        self.right_line = Line(*right)
+        self.horizontal_line = Line(*horizontal)
 
-    def __line(self, a: float, b: float) -> Line:
-        """
-        Построение объекта Line.
-
-        :param a: Параметр 'a' для линии из уравнения прямой
-                 y = ax + b.
-        :param b: Параметр 'b' для линии из уравнения прямой
-                 y = ax + b.
-
-        :return: Line(a, b).
-        """
-        line = Line(a, b)
-        return line
-
-    def __cross_point_lines(self, line1: Line, line2: Line) -> Tuple[float]:
+    def __cross_point_lines(self, line1: Line, line2: Line) -> Tuple[float, float]:
         """
         Вычисление точки пересечения 2х прямых.
 
@@ -96,7 +97,7 @@ class Linear:
         :param line1: первая линия класса Line.
 
         :return: Кортеж (x, y), являющуюся координатами точки из
-                 уравнения y = ax + b.
+                 уравнения :math: 'y =  \\alpha x +  \\beta'.
         """
         numerator = line2.b - line1.b
         denumerator = line1.a - line2.a
@@ -111,12 +112,8 @@ class Linear:
 
         :return: Угол между прямыми левой и правой границ в градусах.
         """
-        numerator = self.left_line.a - self.right_line.a
-        denumerator = 1 + self.left_line.a * self.right_line.a
-        if denumerator == 0:
-            return 90.0
-        alpha = math.degrees(math.atan(numerator / denumerator))
-        return round(180 - alpha, 2)
+        alpha = self.right_line.angle() - self.left_line.angle()
+        return round(alpha, 2)
 
     def area_triangle(self) -> float:
         """
@@ -132,8 +129,32 @@ class Linear:
         a = np.linalg.norm(left_cross_point - middle_cross_point)
         b = np.linalg.norm(right_cross_point - middle_cross_point)
         alpha = self.sharpening_angle()
-        S = 0.5 * a * b * math.sin(math.radians(alpha))
-        return round(S, 2)
+        area = 0.5 * a * b * math.sin(math.radians(alpha))
+        return round(area, 2)
+
+    def tip_perpendicular_length(self) -> float:
+        """
+        Вычисление расстояние от точки пересечения левой и правой линии
+        до горизонтальной линии.
+        Расстояние вычисляется по формуле:
+        :math: \frac{\lvert A x_0 + B y_0 + C\rvert}{\sqrt{ A^2 + B^2}},
+            A - :math:'\alpha' горизонтальной прямой;
+            B - 1;
+            C - :math:'\beta' горизонтальной прямой;
+            :math:'x_0' и :math:'y_0' - точка пересечения левой и правой
+                линии.
+
+        :return: Расстояние от точки пересечения левой и правой линии
+                 до горизонтальной линии.
+        """
+        a = self.horizontal_line.a
+        c = self.horizontal_line.b
+        # Точка наконечника
+        x, y = self.__cross_point_lines(self.left_line, self.right_line)
+        numerator = abs(a * x - 1 * y + c)
+        denumerator = math.sqrt(a**2 + 1**2)
+        return round(numerator/denumerator, 2)
+
 
 
 class LinearInterpolate:
@@ -172,20 +193,21 @@ class LinearInterpolate:
         l = len(x_list)
         y_list_new = []
         x_list_new = []
+        # Определяем коэфициенты
         if y_list[0] < y_list[-1]: # если левая граница
-            y_list_new = np.hstack([y_list[:round(l*(loss_zone/2)):loss_ratio],
-                y_list[round(l*(loss_zone/2)):round(l*loss_zone):math.ceil(loss_ratio/2)],
-                y_list[round(l*loss_zone)::1]])
-            x_list_new = np.hstack([x_list[:round(l*(loss_zone/2)):loss_ratio],
-                x_list[round(l*(loss_zone/2)):round(l*loss_zone):math.ceil(loss_ratio/2)],
-                x_list[round(l*loss_zone)::1]])
+            sep_positions = [round(l*(loss_zone/2)), round(l*loss_zone)]
+            loss_ratios = [loss_ratio, math.ceil(loss_ratio/2), 1]
+
         else:                      # если правая граница
-            y_list_new = np.hstack([y_list[:round(l*(1-loss_zone)):1],
-                y_list[round(l*(1-loss_zone)):round(l*(1-loss_zone/2)):math.ceil(loss_ratio/2)],
-                y_list[round(l*(1-loss_zone/2))::loss_ratio]])
-            x_list_new = np.hstack([x_list[:round(l*(1-loss_zone)):1],
-                x_list[round(l*(1-loss_zone)):round(l*(1-loss_zone/2)):math.ceil(loss_ratio/2)],
-                x_list[round(l*(1-loss_zone/2))::loss_ratio]])
+            sep_positions = [round(l*(1-loss_zone)), round(l*(1-loss_zone/2))]
+            loss_ratios = [1, math.ceil(loss_ratio/2), loss_ratio]
+        # Производим отсеивание
+        y_list_new = np.hstack([y_list[:sep_positions[0]:loss_ratios[0]],
+            y_list[sep_positions[0]:sep_positions[1]:loss_ratios[1]],
+            y_list[sep_positions[1]::loss_ratios[2]]])
+        x_list_new = np.hstack([x_list[:sep_positions[0]:loss_ratios[0]],
+            x_list[sep_positions[0]:sep_positions[1]:loss_ratios[1]],
+            x_list[sep_positions[1]::loss_ratios[2]]])
         # Обучаем модель
         self.model.fit(x_list_new.reshape(-1, 1), y_list_new.reshape(-1, 1))
 
@@ -219,27 +241,32 @@ class Statistic:
 
     :arg angle: Угол между прямыми.
     :arg area_triangle: Полщадь недостающего наконечника.
+    :arg length_missing_tip: Длина недостающей (сточенной) части
+                             наконечника.
     """
-    def __init__(self, angle: float, area_triangle: float):
+    def __init__(self, sharpening_angle: float,
+                       area_triangle: float,
+                       length_missing_tip: float):
         self.angle = sharpening_angle
         self.area_triangle = area_triangle
+        self.length_missing_tip = length_missing_tip
 
 
 def __build_linear(contour: pd.DataFrame,
-                   percent_cut: float = 0.1) -> Linear:
+                   percent_cut: float = 0.1) -> ContourLine:
     """
     Построение линий по точкам границы.
 
     Строит 2 линии, описывающие боковые границы, и одну линию,
     описывающую тупую поверхность. Все эти линии хранятся в объекте
-    класса Linear.
+    класса ContourLine.
 
     :param contour: Точки контура в формате DataFrame
                     с колонками ["x", "y"].
     :param percent_cut: Процент, на который обрежется наконечник иглы.
                         По умолчкию равен 0.1.
 
-    :return: Объект класса Linear, содержащий найденные прямые.
+    :return: Объект класса ContourLine, содержащий найденные прямые.
     """
     needle = contour.copy()
     # Обрезаем нижние границы
@@ -260,7 +287,7 @@ def __build_linear(contour: pd.DataFrame,
     (a1, b1) = needle_edge_1_interpolate.get_weight()
     (a2, b2) = needle_edge_2_interpolate.get_weight()
     # возвращаем функции линий:
-    return Linear(a1, b1, a2, b2, needle_max[1])
+    return ContourLine((a1, b1), (a2, b2), (0, needle_max[1]))
 
 
 def plot_needle(df_list_to_plot: list, picture: np.ndarray):
@@ -308,7 +335,7 @@ def build_line_and_find_statistic(img: pd.ndarray,
     :return: Объект класса Statistic, содержащий найденные статистики.
     """
     # Строим линии по контуру
-    linear = build_linear(contour)
+    linear = __build_linear(contour)
     # Получаем координаты точек линий в формате DataFrame
     left = contour["x"][0]
     right = contour["x"][contour.shape[0] - 1 ]
@@ -319,13 +346,16 @@ def build_line_and_find_statistic(img: pd.ndarray,
     top_line = pd.DataFrame([left, right], columns=["x"])
     top_line["y"] = linear.horizontal_line.value(top_line["x"].to_numpy())
 
-    plot_needle_final(df_list_to_plot = [left_line, right_line, top_line],
+    plot_needle(df_list_to_plot = [left_line, right_line, top_line],
                       picture = img)
 
     angle = linear.sharpening_angle()
     print("Угол заточки:", angle)
     area = linear.area_triangle()
     print("Площадь тупости в px^2:", area)
-    statistic = Statistic(angle, area)
+    length_missing_tip = linear.tip_perpendicular_length()
+    print("Длина тупости в px:", length_missing_tip())
+
+    statistic = Statistic(angle, area, length_missing_tip)
 
     return statistic
