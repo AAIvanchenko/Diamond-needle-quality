@@ -83,9 +83,9 @@ def find_contour(filter_img: np.ndarray) -> List[np.ndarray]:
     threshold = 150
     max_val = 255
     _, thresh = cv.threshold(filter_img, threshold, max_val,
-                               cv.THRESH_BINARY)
+                             cv.THRESH_BINARY)
     contours, _ = cv.findContours(image=thresh, mode=cv.RETR_TREE,
-                                          method=cv.CHAIN_APPROX_NONE)
+                                  method=cv.CHAIN_APPROX_NONE)
 
     return contours
 
