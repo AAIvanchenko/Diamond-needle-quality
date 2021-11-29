@@ -109,8 +109,10 @@ def filter_strong_clarity(img: np.ndarray) -> np.ndarray:
     return img_filter
 
 
-def selective_filter_clarity(filter_clarity: Callable[[np.ndarray], np.ndarray], img: np.ndarray,
-                             min_num_blur: int = 30) -> np.ndarray:
+def selective_filter_clarity(
+        filter_clarity: Callable[[np.ndarray], np.ndarray],
+        img: np.ndarray,
+        min_num_blur: int = 30) -> np.ndarray:
     """
     Выборочная фильтрацая изображений.
         У картинки будет повышаться резкость, если степень размыточти
@@ -140,7 +142,8 @@ def filter_bilateral(img: np.ndarray) -> np.ndarray:
 
     :return: Цветное изображение с примененным фильтром.
     """
-    diameter = 9  # Диаметр каждой окрестности пикселя, используемой во время фильтрации
+    # Диаметр каждой окрестности пикселя, используемой во время фильтрации
+    diameter = 9
     sigma_color = 75
     sigma_space = 75
     img_filter = cv.bilateralFilter(img, diameter, sigma_color, sigma_space)
@@ -187,5 +190,6 @@ def filter_add_weight(img: np.ndarray) -> np.ndarray:
     beta = -4
     gamma = 128
 
-    kernel = cv.addWeighted(img, alpha, filter_gaussian_blur(img), beta, gamma)
+    kernel = cv.addWeighted(img, alpha, filter_gaussian_blur(img),
+                            beta, gamma)
     return kernel
