@@ -3,11 +3,11 @@
 Так же дополнительные функция для данной обработки.
 """
 
+from collections.abc import Callable
+
 import numpy as np
 import cv2 as cv
-
 from matplotlib import pyplot as plt
-from collections.abc import Callable
 
 
 def draw_hist_gray(img_gray: np.ndarray) -> None:
@@ -19,8 +19,8 @@ def draw_hist_gray(img_gray: np.ndarray) -> None:
     height, weight = img_gray.shape[:]
     pixel_sequence = img_gray.reshape([height * weight, ])
     number_bins = 256
-    histogram, bins, patch = plt.hist(pixel_sequence, number_bins,
-                                      facecolor="black", histtype="bar")
+    histogram, _, _ = plt.hist(pixel_sequence, number_bins,
+                               facecolor="black", histtype="bar")
     plt.xlabel("Интенсивность серого")
     plt.ylabel("Количество пикселей")
     plt.axis([0, 255, 0, np.max(histogram)])
@@ -129,9 +129,8 @@ def selective_filter_clarity(
     if num_blur < min_num_blur:
         filter_img = filter_clarity(img)
         return filter_img
-    else:
-        print("Фильтр не применился")
-        return img
+    print("Фильтр не применился")
+    return img
 
 
 def filter_bilateral(img: np.ndarray) -> np.ndarray:
