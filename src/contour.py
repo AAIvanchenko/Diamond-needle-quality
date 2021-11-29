@@ -37,7 +37,8 @@ def read_img(path_img: str) -> np.ndarray:
     return img
 
 
-def max_points(contours: List[np.ndarray], number_pixel_min: int = 70) -> List[List[int]]:
+def max_points(contours: List[np.ndarray],
+               number_pixel_min: int = 70) -> List[List[int]]:
     """
     Поиск максимума y для одинаковых x.
         Проходясь по всему массиву контуров, сначала мы отбираем
@@ -80,8 +81,10 @@ def find_contour(filter_img: np.ndarray) -> List[np.ndarray]:
     """
     threshold = 150
     max_val = 255
-    ret, thresh = cv.threshold(filter_img, threshold, max_val, cv.THRESH_BINARY)
-    contours, hierarchy = cv.findContours(image=thresh, mode=cv.RETR_TREE, method=cv.CHAIN_APPROX_NONE)
+    ret, thresh = cv.threshold(filter_img, threshold, max_val,
+                               cv.THRESH_BINARY)
+    contours, hierarchy = cv.findContours(image=thresh, mode=cv.RETR_TREE,
+                                          method=cv.CHAIN_APPROX_NONE)
 
     return contours
 
@@ -199,7 +202,8 @@ def draw_borders(img: np.ndarray, point_contour: List[List[int]]) -> None:
     """
     plt.figure(figsize=(13, 13))
     image_copy = img.copy()
-    max_len = cv.drawContours(image=image_copy, contours=np.array([point_contour]),
+    max_len = cv.drawContours(image=image_copy,
+                              contours=np.array([point_contour]),
                               contourIdx=-1, color=(0, 255, 0),
                               thickness=2, lineType=cv.LINE_AA)
     plt.subplot(122), plt.imshow(max_len)
