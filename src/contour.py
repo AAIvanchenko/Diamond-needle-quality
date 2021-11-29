@@ -4,11 +4,12 @@
 ходе исследований различных методов выделения границ.
 """
 
+from typing import List
+
 import cv2 as cv
 import numpy as np
 import pandas as pd
 
-from typing import List
 from matplotlib import pyplot as plt
 
 
@@ -81,9 +82,9 @@ def find_contour(filter_img: np.ndarray) -> List[np.ndarray]:
     """
     threshold = 150
     max_val = 255
-    ret, thresh = cv.threshold(filter_img, threshold, max_val,
+    _, thresh = cv.threshold(filter_img, threshold, max_val,
                                cv.THRESH_BINARY)
-    contours, hierarchy = cv.findContours(image=thresh, mode=cv.RETR_TREE,
+    contours, _ = cv.findContours(image=thresh, mode=cv.RETR_TREE,
                                           method=cv.CHAIN_APPROX_NONE)
 
     return contours
