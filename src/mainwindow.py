@@ -3,14 +3,16 @@ from platform import system
 
 
 import numpy as np
+import pandas as pd
 from PyQt5.QtWidgets import QMessageBox, QInputDialog, QFileDialog, QMainWindow
-from PyQt5.QtGui import QPixmap, QImage
-from PyQt5.QtCore import QSize
+from PyQt5.QtGui import QPixmap, QImage, QPainter, QPen, QBrush, QColor
+from PyQt5.QtCore import QSize, Qt
 
 
 import contour
+import linear
+import imageproc
 from ui_mainwindow import Ui_MainWindow
-
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -27,6 +29,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         :method:'set_diamond_image_ui()' для отображения
                 'self.ui_image' в виджете изобаржения на главном
                 экране приложения;
+        :method:'create_linear()' для создания 'self.linear' на основе
+                загруженнной картинки, режимов повышения резкости и
+                типов фильтрации;
+        :method:'create_statistic()' для добавления действий при изменении
+                размеров окна;
+        :method:'set_ui_statistic()' для отображения значения 'self.statistic'
+                в полях пользовательского
+        интерфейса;
+        :method:'update_ui_image()' для обновления QImage с заданными
+                дополнительными отрисовками;
         :method:'resizeEvent()' для добавления действий при изменении
                 размеров окна;
     """
@@ -39,10 +51,31 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.setWindowTitle("Проверка качества алмазной иглы")
 
         self.image_directory: String = self.take_home_path()
-        self.row_image: np.ndarray = None;
-        self.ui_image: QImage = None;
+        self.row_image: np.ndarray = None
+        self.ui_image: QImage = None
+        self.contour: np.ndarray = None
+        self.linear: linear.ContourLine = None
+        self.statistic: linear.Statistic = None
+
+        self.sharpness_type.addItem("Нет")
+        self.sharpness_type.addItem("Автоматическое")
+        self.sharpness_type.addItem("Слабое")
+        self.sharpness_type.addItem("Среднее")
+        self.sharpness_type.addItem("Сильное")
+        self.sharpness_type.setCurrentIndex(0)
+
+        self.border_selection_type.addItem("Кени")
+        self.border_selection_type.addItem("Собеля")
+        self.border_selection_type.setCurrentIndex(0)
+
+        self.needle_boundaries_check.setChecked(True)
+        # self.needle_line_check.setChecked(True)
 
         self.import_img.triggered.connect(self.load_image_by_dialog)
+        self.needle_boundaries_check.clicked.connect(self.update_ui_image)
+        self.needle_line_check.clicked.connect(self.update_ui_image)
+        self.sharpness_type.currentIndexChanged.connect(self.create_linear)
+        self.border_selection_type.currentIndexChanged.connect(self.create_linear)
 
     def take_home_path(self) -> str:
         """
@@ -77,7 +110,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Запоминание выбранной директории
         self.image_directory = "/".join(file_path.split("/")[:-1])
         self.row_image = contour.read_img(file_path)
-        self.show_diamond_image()
+        self.create_linear()
 
     def create_ui_image(self, image: np.ndarray):
         """
@@ -124,19 +157,130 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         qpixmap = QPixmap(self.ui_image).scaled(QSize(width, height))
         self.diamond_image.setPixmap(qpixmap)
 
-    def show_diamond_image(self):
+    def create_linear(self):
         """
-        Метод, отвечающий за создание и отрисовку изображений.
+        Метод, создающий 'self.linear' на основе загруженнной картинки,
+        режимов повышения резкости и типов фильтрации.
 
-        Сначала вызвает :method:'self.create_ui_image(image)' для
-        создания изображение QImage из 'self.row_image'.
-        После вызывает метод :method:'self.set_diamond_image_ui()' для
-        отрисовки изображения в специальном виджете приложения.
+        Создаёт объект типа CounterLine в переменной 'self.linear'
+        на основе загруженнной картинки, режимов повышения резкости и
+        типов фильтрации.
+        По окончанию вызывает :method:'self.create_statistic()' и
+        :method:'self.update_ui_image()'.
 
-        :ref:'self.create_ui_image()'
-        :ref:'self.set_diamond_image_ui()'
+        :ref:'self.create_statistic()'
+        :ref:'self.update_ui_image()'
+        """
+        img = self.row_image.copy()
+
+        # Увеличиваем резкость
+        if self.sharpness_type.currentIndex() == 1:
+            # Автоматическое
+            img = imageproc.selective_filter_clarity(
+                        imageproc.additive_correct,
+                        img)
+        elif self.sharpness_type.currentIndex() == 2:
+            # Слабое
+            img = imageproc.filter_add_weight(img)
+        elif self.sharpness_type.currentIndex() == 3:
+            # Среднее
+            img = imageproc.additive_correct(img)
+        elif self.sharpness_type.currentIndex() == 4:
+            # Сильное
+            img = imageproc.filter_strong_clarity(img)
+
+        # Выделяем границы
+        if self.border_selection_type.currentIndex() == 0:
+            # Кени
+            img = contour.filter_canny(img)
+        elif self.border_selection_type.currentIndex() == 1:
+            # Собеля
+            img = contour.filter_sobel(img)
+
+        # Генерируем список точек границы
+        contour_needle = contour.find_contour(img)
+        contour_needle_max_point = contour.max_points(contour_needle)
+        df_points = pd.DataFrame(contour_needle_max_point, columns=["x", "y"])
+        self.contour = contour_needle_max_point
+        # Находим линии, описывающие границы
+        # try:
+        self.linear = linear.build_ContourLine(df_points)
+        # except Exception as e:
+        #     print(e)
+        #     self.update_ui_image()
+        #     return
+
+        self.create_statistic()
+        self.update_ui_image()
+
+    def create_statistic(self):
+        """
+        Метод, создающий 'self.statistic' на основе 'self.linear'.
+
+        Создаёт объект типа Statistic в переменной 'self.statistic'
+        на основе 'self.linear'.
+        По окончанию вызывает :method:'self.set_ui_statistic()'.
+
+        :ref:'self.set_ui_statistic()'
+        """
+        # Находим статистику иглы
+        angle = self.linear.sharpening_angle()
+        # print("Угол заточки:", angle)
+        area = self.linear.area_triangle()
+        # print("Площадь тупости в px^2:", area)
+        length_missing_tip = self.linear.tip_perpendicular_length()
+        # print("Длина тупости в px:", length_missing_tip)
+        self.statistic = linear.Statistic(angle, area, length_missing_tip)
+        self.statistic.make_sharping_result(self.linear.horizontal_line.value(0))
+        # print("Острая ли игла?:", self.statistic.is_sharp_result)
+
+        self.set_ui_statistic()
+
+    def set_ui_statistic(self):
+        """
+        Метод, отображабщий значения 'self.statistic' в полях пользовательского
+        интерфейса.
+
+        Отображает Statistic из 'self.statistic' в полях пользовательского
+        интерфейса.
+        """
+        self.sharpening_angle.setText(str(self.statistic.angle))
+        if self.statistic.is_sharp_result:
+            self.conclusion.setText("Острая")
+        else:
+            self.conclusion.setText("Сточенная")
+
+    def update_ui_image(self):
+        """
+        Метод, обновляющий QImage с заданными дополнительными отрисовками.
+
+        Обновляет QImage в 'self.ui_image' с заданными дополнительными
+        отрисовками (контуры иглы, построенные линии).
         """
         self.create_ui_image(self.row_image)
+        painter = QPainter()
+        painter.begin(self.ui_image)
+        # Отрисовываем контур
+        if self.needle_boundaries_check.isChecked() and self.contour is not None:
+            color = QColor(Qt.cyan)
+            color.setAlphaF(0.5)
+            painter.setPen(QPen(color, 5))
+            for point in self.contour:
+                painter.drawPoint(point[0], point[1])
+        # Отрисовываем дополнительные линии
+        if self.needle_line_check.isChecked() and self.linear is not None:
+            colors = [QColor(Qt.blue), QColor(Qt.blue), QColor(Qt.red)]
+            for color in colors:
+                color.setAlphaF(0.8)
+            for line in [self.linear.left_line,
+                        self.linear.right_line,
+                        self.linear.horizontal_line]:
+                painter.setPen(QPen(colors[0], 8, Qt.DashLine))
+                height = self.ui_image.width()
+                painter.drawLine(0, line.value(0), height, line.value(height))
+                colors.pop(0)
+        painter.end()
+
         self.set_diamond_image_ui()
 
     def resizeEvent(self, event):

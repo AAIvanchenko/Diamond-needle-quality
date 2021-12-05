@@ -9,8 +9,7 @@
 
 # Импортируем стандартные библиотеки
 import math
-from typing import Tuple
-from collections.abc import Callable
+from typing import Tuple, List, Callable
 
 # Импортируем сторонние библиотеки
 import numpy as np
@@ -69,8 +68,6 @@ class ContourLine:
     методы работы с ними.
     Стоит отметить, что на картинке левая и правая линия меняются
     местами, т.к. начало координат у картинки слева вверху.
-
-    СЛУЖЕБНЫЙ
 
     :arg left: Кортеж, содержащий параметр 'alpha' и 'beta'
                для левой границы из уравнения прямой
@@ -171,6 +168,7 @@ class LinearInterpolate:
              с колонками ["x", "y"].
     """
     def __init__(self, df: pd.DataFrame):
+        print(df)
         self.model = LinearRegression(normalize = True, n_jobs=-1)
         self.fit(df["x"].to_numpy(), df["y"].to_numpy())
 
@@ -191,8 +189,8 @@ class LinearInterpolate:
         """
         # Откинем лишние точки по мере их удалённости от наконечкика
         l = len(x_list)
-        y_list_new = []
-        x_list_new = []
+        y_list_new = None
+        x_list_new = None
         # Определяем коэфициенты
         if y_list[0] < y_list[-1]: # если левая граница
             sep_positions = [round(l*(loss_zone/2)), round(l*loss_zone)]
@@ -243,6 +241,10 @@ class Statistic:
     :arg area_triangle: Полщадь недостающего наконечника.
     :arg length_missing_tip: Длина недостающей (сточенной) части
                              наконечника.
+    :arg is_sharp_result: Вывод о том, что игла острая.
+
+    :method:'self.make_sharping_result()' метод для вынесения вердикта о тупости
+                            иглы по размеру самой иглы.
     """
     def __init__(self, sharpening_angle: float,
                        area_triangle: float,
@@ -250,9 +252,24 @@ class Statistic:
         self.angle = sharpening_angle
         self.area_triangle = area_triangle
         self.length_missing_tip = length_missing_tip
+        self.is_sharp_result: bool = False
 
+    def make_sharping_result(self, needle_height: int, threshold: float = 0.02):
+        """
+        Метод, определяющий тупость иглы.
 
-def __build_linear(contour: pd.DataFrame,
+        Тупость иглы определяется сравнением высоты сточенного кончика иглы с
+        высотой самой иглы. Вердикт записывает в 'self.is_sharp_result'.
+
+        :arg needle_height: высота иглы (в пикселях);
+        :arg threshold: пороговое значение (в процентах).
+        """
+        if self.length_missing_tip >= needle_height * threshold:
+            self.is_sharp_result = False
+        else:
+            self.is_sharp_result = True
+
+def build_ContourLine(contour: pd.DataFrame,
                    percent_cut: float = 0.1) -> ContourLine:
     """
     Построение линий по точкам границы.
@@ -269,6 +286,19 @@ def __build_linear(contour: pd.DataFrame,
     :return: Объект класса ContourLine, содержащий найденные прямые.
     """
     needle = contour.copy()
+    # Обрезаем края
+    # По х
+    padding = 10
+    x_max = needle["x"].max()
+    needle = needle.loc[(needle['x'] >= padding) & (needle['x'] <= (x_max - padding))]
+
+    # По Y
+    Q1 = needle["y"].quantile(0.25)
+    Q3 = needle["y"].quantile(0.75)
+    IQR = Q3 - Q1
+    df_IQR = needle[(needle["y"] < (Q1-1.5*IQR)) | (needle["y"] > (Q3+1.5*IQR))]
+    df_IQR = df_IQR["y"]
+
     # Обрезаем нижние границы
     needle = needle[needle["y"] > needle["y"].max() -
                             ((needle["y"].max() - needle["y"].min()) / 3)]
@@ -288,74 +318,3 @@ def __build_linear(contour: pd.DataFrame,
     (a2, b2) = needle_edge_2_interpolate.get_weight()
     # возвращаем функции линий:
     return ContourLine((a1, b1), (a2, b2), (0, needle_max[1]))
-
-
-def plot_needle(df_list_to_plot: list, picture: np.ndarray):
-    """
-    Вывод изображения иглы и построение на нём линий.
-
-    Строит 2 линии, описывающие боковые границы, и одну линию,
-    описывающую тупую поверхность. Построение происходит с помощью
-    библиотеки matplotlib.
-
-    :param df_list_to_plot: Массив, каждый эллемент которого представляет
-                            собой координаты точек, принадлежащих линии,
-                            в формате DataFrame с колонками ["x", "y"].
-    :param picture: Изображение в формате DataFrame.
-    """
-    plt.figure(figsize=(30, 13))
-    plt.imshow(picture)
-
-    linewidth = 3
-    color = ["Blue", "Blue", "Green"]
-    if df_list_to_plot is not None:
-        for df in df_list_to_plot:
-            plt.plot(df["x"], df["y"], linewidth = linewidth,
-            alpha=0.8, color=color[0], linestyle = "dashed")
-            color.pop(0)
-
-    plt.title('Игла с построенными линиями')
-    plt.show()
-
-
-def build_line_and_find_statistic(img: pd.ndarray,
-                                  contour: pd.DataFrame) -> Statistic:
-    """
-    Вывод изображения иглы, построение на нём линий, возврат статистики.
-
-    Строит 2 линии, описывающие боковые границы, и одну линию,
-    описывающую тупую поверхность. Выводит данные статистики картинки (
-    угол заточки иглы и площадь стёртого наконечники в px^2).
-    Возвращает статистику картинки в виде объекта класса Statistic.
-
-    :param img: Изображение в формате DataFrame.
-    :param contour: Точки контура в формате DataFrame
-                    с колонками ["x", "y"].
-
-    :return: Объект класса Statistic, содержащий найденные статистики.
-    """
-    # Строим линии по контуру
-    linear = __build_linear(contour)
-    # Получаем координаты точек линий в формате DataFrame
-    left = contour["x"][0]
-    right = contour["x"][contour.shape[0] - 1 ]
-    left_line = pd.DataFrame([left, right], columns=["x"])
-    left_line["y"] = linear.left_line.value(left_line["x"].to_numpy())
-    right_line = pd.DataFrame([left, right], columns=["x"])
-    right_line["y"] = linear.right_line.value(right_line["x"].to_numpy())
-    top_line = pd.DataFrame([left, right], columns=["x"])
-    top_line["y"] = linear.horizontal_line.value(top_line["x"].to_numpy())
-
-    plot_needle(df_list_to_plot = [left_line, right_line, top_line],
-                      picture = img)
-
-    angle = linear.sharpening_angle()
-    print("Угол заточки:", angle)
-    area = linear.area_triangle()
-    print("Площадь тупости в px^2:", area)
-    length_missing_tip = linear.tip_perpendicular_length()
-    print("Длина тупости в px:", length_missing_tip())
-
-    statistic = Statistic(angle, area, length_missing_tip)
-
-    return statistic

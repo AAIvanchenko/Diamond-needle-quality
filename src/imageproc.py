@@ -7,7 +7,7 @@ import numpy as np
 import cv2 as cv
 
 from matplotlib import pyplot as plt
-from collections.abc import Callable
+from typing import Callable
 
 
 def draw_hist_gray(img_gray: np.ndarray) -> None:

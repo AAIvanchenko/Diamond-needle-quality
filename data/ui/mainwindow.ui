@@ -71,7 +71,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QComboBox" name="comboBox_2">
+            <widget class="QComboBox" name="sharpness_type">
              <property name="cursor">
               <cursorShape>PointingHandCursor</cursorShape>
              </property>
@@ -132,7 +132,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QComboBox" name="comboBox">
+            <widget class="QComboBox" name="border_selection_type">
              <property name="cursor">
               <cursorShape>PointingHandCursor</cursorShape>
              </property>
@@ -175,7 +175,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QCheckBox" name="checkBox">
+          <widget class="QCheckBox" name="needle_boundaries_check">
            <property name="font">
             <font>
              <pointsize>10</pointsize>
@@ -190,7 +190,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QCheckBox" name="checkBox_2">
+          <widget class="QCheckBox" name="needle_line_check">
            <property name="font">
             <font>
              <pointsize>10</pointsize>
@@ -377,7 +377,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="sharpening_angle_2">
+            <widget class="QLabel" name="conclusion">
              <property name="minimumSize">
               <size>
                <width>10</width>
