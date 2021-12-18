@@ -30,9 +30,8 @@ class CustomPdf(FPDF):
         self.add_font('DejaVuSerif-Bold', '',
                       '..//font//DejaVuSerif-Bold.ttf',
                       uni=True)
-        font = self.set_font('DejaVuSerif-Bold', '', self.font_size)
-        self.cell(0, self.text_step,
-                 f'Отчет.',
+        self.set_font('DejaVuSerif-Bold', '', self.font_size)
+        self.cell(0, self.text_step, 'Отчет.',
                   ln=2, align="C")
 
     def footer(self) -> None:
@@ -101,7 +100,7 @@ def add_image(pdf: Type[CustomPdf],
     pdf.image(image_path, x=55, y=60, w=90)
     pdf.ln(indent)  # ниже на 130
     pdf.cell(0, text_height,
-             txt=f'Рисунок 1 - Границы иглы',
+             txt='Рисунок 1 - Границы иглы',
              ln=1,  align="C")
     os.remove(image_path)
 
@@ -129,7 +128,8 @@ def add_text_result(pdf: Type[CustomPdf],
              ln=1, align="L")
 
 
-def create_pdf(pdf_path: str, q_image: Union[QImage], corner: float, verdict: str) -> None:
+def create_pdf(pdf_path: str, q_image: Union[QImage],
+               corner: float, verdict: str) -> None:
     """
     Генерация отчета pdf со всей информацией об игле.
 
