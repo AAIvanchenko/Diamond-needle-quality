@@ -1,3 +1,7 @@
+"""
+Модуль для генерации отчета.
+"""
+
 import os
 import tempfile
 from typing import Type, Union
@@ -28,7 +32,7 @@ class CustomPdf(FPDF):
                       uni=True)
         font = self.set_font('DejaVuSerif-Bold', '', self.font_size)
         self.cell(0, self.text_step,
-                  "Отчет.".format(font, self.font_size),
+                 f'Отчет.',
                   ln=2, align="C")
 
     def footer(self) -> None:
@@ -84,7 +88,8 @@ def add_text_before_img(pdf: Type[CustomPdf]) -> None:
              ln=1, align="C")
 
 
-def add_image(pdf: Type[CustomPdf], image_path: str) -> None:
+def add_image(pdf: Type[CustomPdf],
+              image_path: str) -> None:
     """
     Добавление картинки в отчет pdf.
 
@@ -96,12 +101,14 @@ def add_image(pdf: Type[CustomPdf], image_path: str) -> None:
     pdf.image(image_path, x=55, y=60, w=90)
     pdf.ln(indent)  # ниже на 130
     pdf.cell(0, text_height,
-             txt="Рисунок 1 - Границы иглы".format(image_path),
+             txt=f'Рисунок 1 - Границы иглы',
              ln=1,  align="C")
     os.remove(image_path)
 
 
-def add_text_result(pdf: Type[CustomPdf], corner: float, verdict: str) -> None:
+def add_text_result(pdf: Type[CustomPdf],
+                    corner: float,
+                    verdict: str) -> None:
     """
     Добавление текста о результатах работы программы.
 
