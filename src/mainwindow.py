@@ -51,6 +51,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.setWindowTitle("Проверка качества алмазной иглы")
 
         self.image_directory: String = self.take_home_path()
+        self.image_name_file: String = None
         self.row_image: np.ndarray = None
         self.ui_image: QImage = None
         self.contour: np.ndarray = None
@@ -72,6 +73,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # self.needle_line_check.setChecked(True)
 
         self.import_img.triggered.connect(self.load_image_by_dialog)
+        self.export_pdf.triggered.connect(self.export_result_pdf)
+        self.export_jpg.triggered.connect(self.export_result_image)
         self.needle_boundaries_check.clicked.connect(self.update_ui_image)
         self.needle_line_check.clicked.connect(self.update_ui_image)
         self.sharpness_type.currentIndexChanged.connect(self.create_linear)
@@ -108,8 +111,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             return
         # Запоминание выбранной директории
         self.image_directory = os.path.dirname(file_path)
+        self.image_name_file = os.path.basename(file_path)
         self.row_image = contour.read_img(file_path)
         self.create_linear()
+
 
     def create_ui_image(self, image: np.ndarray):
         """
@@ -293,6 +298,66 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         painter.end()
 
         self.set_diamond_image_ui()
+
+    def export_result_image(self):
+        msg = QMessageBox()
+        msg.setWindowTitle("Ошибка")
+        msg.setIcon(QMessageBox.Warning)
+        msg.setStandardButtons(QMessageBox.Ok)
+        if self.ui_image is None:
+            msg.setText("Экспорт недоступен. Загрузите сначала изображение " +
+                        "и настройте параметры отображения.")
+            msg.exec_()
+            return
+
+        intended_name = os.path.splitext(self.image_name_file)[0] + "_contour.jpg"
+        file_path = QFileDialog.getSaveFileName(
+                        self, "Экспорт отображаемого изображения иглы",
+                        os.path.join(self.image_directory, intended_name),
+                        "Image Files (*.png *.jpg)")[0]
+
+        ext = os.path.splitext(file_path)[1]
+        if (ext != ".jpg") and (ext != ".png"):
+            msg.setText("Указанное расширение файла не доступно.")
+            msg.exec_()
+            return
+
+        # Код, который запускает
+        print(file_path)
+        pass
+
+    def export_result_pdf(self):
+        msg = QMessageBox()
+        msg.setWindowTitle("Ошибка")
+        msg.setIcon(QMessageBox.Warning)
+        msg.setStandardButtons(QMessageBox.Ok)
+        if self.ui_image is None:
+            msg.setText("Экспорт недоступен. Загрузите сначала изображение " +
+                        "и настройте параметры отображения.")
+            msg.exec_()
+            return
+
+        if self.statistic is None:
+            msg.setText("Результаты программы не получены.\n " +
+                        "Убедитесь, что программа отработала корректно.")
+            msg.exec_()
+            return
+
+        intended_name = os.path.splitext(self.image_name_file)[0] + "_report.pdf"
+        file_path = QFileDialog.getSaveFileName(
+                        self, "Экспорт отчёта по текущему изображению иглы",
+                        os.path.join(self.image_directory, intended_name),
+                        "PDF Files (*.pdf)")[0]
+
+        ext = os.path.splitext(file_path)[1]
+        if ext != ".pdf":
+            msg.setText("Указанное расширение файла не доступно.")
+            msg.exec_()
+            return
+
+        # Код, который запускает
+        print(file_path)
+        pass
 
     def resizeEvent(self, event):
         """

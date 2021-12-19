@@ -3,7 +3,7 @@
 Так же дополнительные функция для данной обработки.
 """
 
-from collections.abc import Callable
+from typing import Callable
 
 import numpy as np
 import cv2 as cv
