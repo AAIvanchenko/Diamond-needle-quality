@@ -6,7 +6,7 @@ from PyQt5 import QtWidgets
 from mainwindow import MainWindow
 
 if __name__ == "__main__":
-    """Функция старта программы."""
+    """Точка входа."""
 
     app = QtWidgets.QApplication(sys.argv)
     window = MainWindow()

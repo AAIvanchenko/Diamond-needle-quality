@@ -4,7 +4,7 @@ from platform import system
 
 import numpy as np
 import pandas as pd
-from PyQt5.QtWidgets import QMessageBox, QInputDialog, QFileDialog, QMainWindow
+from PyQt5.QtWidgets import QMessageBox, QInputDialog, QFileDialog, QMessageBox, QMainWindow
 from PyQt5.QtGui import QPixmap, QImage, QPainter, QPen, QBrush, QColor
 from PyQt5.QtCore import QSize, Qt
 
@@ -64,7 +64,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.sharpness_type.addItem("Сильное")
         self.sharpness_type.setCurrentIndex(0)
 
-        self.border_selection_type.addItem("Кени")
+        self.border_selection_type.addItem("Кенни")
         self.border_selection_type.addItem("Собеля")
         self.border_selection_type.setCurrentIndex(0)
 
@@ -100,15 +100,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         Изменяет 'self.image_directory' на директорию, в котором было
         изображение.
         """
-        file_path = QFileDialog.getOpenFileName(self,
-                        "Загрузить изображение иглы",
-                        self.image_directory,
-                        "Image Files (*.png *.jpg)")[0]
+        file_path = QFileDialog.getOpenFileName(
+                        self, "Загрузить изображение иглы",
+                        self.image_directory, "Image Files (*.png *.jpg)")[0]
         # Если пользователь не выбрал файл
-        if file_path == "":
+        if not file_path:
             return
         # Запоминание выбранной директории
-        self.image_directory = "/".join(file_path.split("/")[:-1])
+        self.image_directory = os.path.dirname(file_path)
         self.row_image = contour.read_img(file_path)
         self.create_linear()
 
@@ -126,18 +125,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """
         if len(image.shape) == 3:
             height, width, chanel = image.shape
-            bytesPerLine = chanel * width
+            bytes_per_line = chanel * width
             self.ui_image = QImage(image.data, width, height,
-                            bytesPerLine, QImage.Format_RGB888).rgbSwapped()
+                                   bytes_per_line,
+                                   QImage.Format_RGB888).rgbSwapped()
         # Если чёрно-белая картинка
         elif len(image.shape) == 2:
             height, width = image.shape
             bytesPerLine = width
             self.ui_image = QImage(image.data, width, height,
-                            bytesPerLine, QImage.Format_Mono)
-        else:
-            raise ValueError("Неверный размер массива изображеия")
-
+                                   bytes_per_line, QImage.Format_Mono)
 
     def set_diamond_image_ui(self):
         """
@@ -173,42 +170,58 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """
         img = self.row_image.copy()
 
+
+        msg = QMessageBox()
+        msg.setWindowTitle("Ошибка")
+        msg.setIcon(QMessageBox.Warning)
+        msg.setStandardButtons(QMessageBox.Ok)
         # Увеличиваем резкость
-        if self.sharpness_type.currentIndex() == 1:
-            # Автоматическое
-            img = imageproc.selective_filter_clarity(
-                        imageproc.additive_correct,
-                        img)
-        elif self.sharpness_type.currentIndex() == 2:
-            # Слабое
-            img = imageproc.filter_add_weight(img)
-        elif self.sharpness_type.currentIndex() == 3:
-            # Среднее
-            img = imageproc.additive_correct(img)
-        elif self.sharpness_type.currentIndex() == 4:
-            # Сильное
-            img = imageproc.filter_strong_clarity(img)
+        try:
+            if self.sharpness_type.currentIndex() == 1:
+                # Автоматическое
+                img = imageproc.selective_filter_clarity(
+                            imageproc.additive_correct,
+                            img)
+            elif self.sharpness_type.currentIndex() == 2:
+                # Слабое
+                img = imageproc.filter_add_weight(img)
+            elif self.sharpness_type.currentIndex() == 3:
+                # Среднее
+                img = imageproc.additive_correct(img)
+            elif self.sharpness_type.currentIndex() == 4:
+                # Сильное
+                img = imageproc.filter_strong_clarity(img)
 
-        # Выделяем границы
-        if self.border_selection_type.currentIndex() == 0:
-            # Кени
-            img = contour.filter_canny(img)
-        elif self.border_selection_type.currentIndex() == 1:
-            # Собеля
-            img = contour.filter_sobel(img)
+            # Выделяем границы
+            if self.border_selection_type.currentIndex() == 0:
+                # Кени
+                img = contour.filter_canny(img)
+            elif self.border_selection_type.currentIndex() == 1:
+                # Собеля
+                img = contour.filter_sobel(img)
+        except Exception:
+            msg.setText("При применении фильтров возникла непредвиденная ошибка.\n\n" +
+                        "Пожалуйста, попробуйте ещё раз или возьмите другое изображение, " +
+                        "или измените выбранные фильтры.")
+            msg.exec_()
+            return
 
-        # Генерируем список точек границы
-        contour_needle = contour.find_contour(img)
-        contour_needle_max_point = contour.max_points(contour_needle)
-        df_points = pd.DataFrame(contour_needle_max_point, columns=["x", "y"])
-        self.contour = contour_needle_max_point
-        # Находим линии, описывающие границы
-        # try:
-        self.linear = linear.build_ContourLine(df_points)
-        # except Exception as e:
-        #     print(e)
-        #     self.update_ui_image()
-        #     return
+        try:
+            # Генерируем список точек границы
+            contour_needle = contour.find_contour(img)
+            contour_needle_max_point = contour.max_points(contour_needle)
+            df_points = pd.DataFrame(contour_needle_max_point, columns=["x", "y"])
+            self.contour = contour_needle_max_point
+            # Находим линии, описывающие границы
+            # try:
+            self.linear = linear.build_contourline(df_points)
+        except Exception:
+            msg.setText("C выбранными элементами фильтрации контуров не найдено.\n\n" +
+                        "Пожалуйста, попробуйте изменить выбранный фильтр выделения " +
+                        "границ или повышения резкости.")
+            msg.exec_()
+            self.update_ui_image()
+            return
 
         self.create_statistic()
         self.update_ui_image()
@@ -272,9 +285,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             colors = [QColor(Qt.blue), QColor(Qt.blue), QColor(Qt.red)]
             for color in colors:
                 color.setAlphaF(0.8)
-            for line in [self.linear.left_line,
-                        self.linear.right_line,
-                        self.linear.horizontal_line]:
+            for line in self.linear.get_lines():
                 painter.setPen(QPen(colors[0], 8, Qt.DashLine))
                 height = self.ui_image.width()
                 painter.drawLine(0, line.value(0), height, line.value(height))

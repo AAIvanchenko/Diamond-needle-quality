@@ -86,6 +86,11 @@ class ContourLine:
         self.right_line = Line(*right)
         self.horizontal_line = Line(*horizontal)
 
+    def get_lines(self):
+        return [self.left_line,
+                self.right_line,
+                self.horizontal_line]
+
     def __cross_point_lines(self, line1: Line, line2: Line) -> Tuple[float, float]:
         """
         Вычисление точки пересечения 2х прямых.
@@ -168,7 +173,6 @@ class LinearInterpolate:
              с колонками ["x", "y"].
     """
     def __init__(self, df: pd.DataFrame):
-        print(df)
         self.model = LinearRegression(normalize = True, n_jobs=-1)
         self.fit(df["x"].to_numpy(), df["y"].to_numpy())
 
@@ -254,7 +258,7 @@ class Statistic:
         self.length_missing_tip = length_missing_tip
         self.is_sharp_result: bool = False
 
-    def make_sharping_result(self, needle_height: int, threshold: float = 0.02):
+    def make_sharping_result(self, needle_height: int, threshold: float=0.02):
         """
         Метод, определяющий тупость иглы.
 
@@ -264,12 +268,10 @@ class Statistic:
         :arg needle_height: высота иглы (в пикселях);
         :arg threshold: пороговое значение (в процентах).
         """
-        if self.length_missing_tip >= needle_height * threshold:
-            self.is_sharp_result = False
-        else:
-            self.is_sharp_result = True
+        threshold_exceeding = self.length_missing_tip >= needle_height * threshold
+        self.is_sharp_result = False if threshold_exceeding else True
 
-def build_ContourLine(contour: pd.DataFrame,
+def build_contourline(contour: pd.DataFrame,
                    percent_cut: float = 0.1) -> ContourLine:
     """
     Построение линий по точкам границы.
@@ -293,11 +295,11 @@ def build_ContourLine(contour: pd.DataFrame,
     needle = needle.loc[(needle['x'] >= padding) & (needle['x'] <= (x_max - padding))]
 
     # По Y
-    Q1 = needle["y"].quantile(0.25)
-    Q3 = needle["y"].quantile(0.75)
-    IQR = Q3 - Q1
-    df_IQR = needle[(needle["y"] < (Q1-1.5*IQR)) | (needle["y"] > (Q3+1.5*IQR))]
-    df_IQR = df_IQR["y"]
+    q1 = needle["y"].quantile(0.25)
+    q3 = needle["y"].quantile(0.75)
+    iqr = q3 - q1
+    df_iqr = needle[(needle["y"] < (q1-1.5*iqr)) | (needle["y"] > (q3+1.5*iqr))]
+    df_iqr = df_iqr["y"]
 
     # Обрезаем нижние границы
     needle = needle[needle["y"] > needle["y"].max() -
