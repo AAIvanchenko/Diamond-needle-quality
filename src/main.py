@@ -1,4 +1,6 @@
-import os
+"""
+Точка входа.
+"""
 import sys
 
 from PyQt5 import QtWidgets
@@ -6,7 +8,9 @@ from PyQt5 import QtWidgets
 from mainwindow import MainWindow
 
 if __name__ == "__main__":
-    """Точка входа."""
+    """
+    Точка входа.
+    """
 
     app = QtWidgets.QApplication(sys.argv)
     window = MainWindow()

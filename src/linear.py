@@ -9,13 +9,12 @@
 
 # Импортируем стандартные библиотеки
 import math
-from typing import Tuple, List, Callable
+from typing import Tuple
 
 # Импортируем сторонние библиотеки
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import cv2 as cv
 from sklearn.linear_model import LinearRegression
 
 
@@ -34,9 +33,9 @@ class Line:
     :arg b: Параметр 'beta' для линии из уравнения прямой
              :math: 'y =  \\alpha x +  \\beta'.
     """
-    def __init__(self, a: float, b: float):
-        self.a = a
-        self.b = b
+    def __init__(self, alpha: float, beta: float):
+        self.alpha = alpha
+        self.beta = beta
 
     def value(self, x: float) -> float:
         """
@@ -46,7 +45,7 @@ class Line:
 
         :return: Вычисление функции y = ax + b.
         """
-        return self.a * x + self.b
+        return self.alpha * x + self.beta
 
     def angle(self) -> float:
         """
@@ -54,7 +53,7 @@ class Line:
 
         :return: угол между прямой и осью абсцисс.
         """
-        angle = math.degrees(math.atan(self.a))
+        angle = math.degrees(math.atan(self.alpha))
         if angle < 0:
             angle = angle + 180
         return angle
@@ -91,7 +90,8 @@ class ContourLine:
                 self.right_line,
                 self.horizontal_line]
 
-    def __cross_point_lines(self, line1: Line, line2: Line) -> Tuple[float, float]:
+    def __cross_point_lines(self, line1: Line,
+                            line2: Line) -> Tuple[float, float]:
         """
         Вычисление точки пересечения 2х прямых.
 
@@ -101,8 +101,8 @@ class ContourLine:
         :return: Кортеж (x, y), являющуюся координатами точки из
                  уравнения :math: 'y =  \\alpha x +  \\beta'.
         """
-        numerator = line2.b - line1.b
-        denumerator = line1.a - line2.a
+        numerator = line2.beta - line1.beta
+        denumerator = line1.alpha - line2.alpha
 
         x = numerator / denumerator
         y = line1.value(x)
@@ -124,14 +124,17 @@ class ContourLine:
         :return: Площадь треугольника, образованном 3мя прямыми.
         """
         # Точки пересечения прямых
-        left_cross_point = np.array(self.__cross_point_lines(self.left_line, self.horizontal_line))
-        middle_cross_point = np.array(self.__cross_point_lines(self.left_line, self.right_line))
-        right_cross_point = np.array(self.__cross_point_lines(self.right_line, self.horizontal_line))
+        left_cross_point = np.array(self.__cross_point_lines(self.left_line,
+                                                        self.horizontal_line))
+        middle_cross_point = np.array(self.__cross_point_lines(self.left_line,
+                                                        self.right_line))
+        right_cross_point = np.array(self.__cross_point_lines(self.right_line,
+                                                        self.horizontal_line))
         # S = 1/2 ab * sin(apha)
-        a = np.linalg.norm(left_cross_point - middle_cross_point)
-        b = np.linalg.norm(right_cross_point - middle_cross_point)
+        a_value = np.linalg.norm(left_cross_point - middle_cross_point)
+        b_value = np.linalg.norm(right_cross_point - middle_cross_point)
         alpha = self.sharpening_angle()
-        area = 0.5 * a * b * math.sin(math.radians(alpha))
+        area = 0.5 * a_value * b_value * math.sin(math.radians(alpha))
         return round(area, 2)
 
     def tip_perpendicular_length(self) -> float:
@@ -149,12 +152,12 @@ class ContourLine:
         :return: Расстояние от точки пересечения левой и правой линии
                  до горизонтальной линии.
         """
-        a = self.horizontal_line.a
-        c = self.horizontal_line.b
+        param_a = self.horizontal_line.alpha
+        param_c = self.horizontal_line.beta
         # Точка наконечника
         x, y = self.__cross_point_lines(self.left_line, self.right_line)
-        numerator = abs(a * x - 1 * y + c)
-        denumerator = math.sqrt(a**2 + 1**2)
+        numerator = abs(param_a * x - 1 * y + param_c)
+        denumerator = math.sqrt(param_a**2 + 1**2)
         return round(numerator/denumerator, 2)
 
 
@@ -192,16 +195,17 @@ class LinearInterpolate:
                            Задаётся целым числом от 3 до 20.
         """
         # Откинем лишние точки по мере их удалённости от наконечкика
-        l = len(x_list)
+        size = len(x_list)
         y_list_new = None
         x_list_new = None
         # Определяем коэфициенты
         if y_list[0] < y_list[-1]: # если левая граница
-            sep_positions = [round(l*(loss_zone/2)), round(l*loss_zone)]
+            sep_positions = [round(size*(loss_zone/2)), round(size*loss_zone)]
             loss_ratios = [loss_ratio, math.ceil(loss_ratio/2), 1]
 
         else:                      # если правая граница
-            sep_positions = [round(l*(1-loss_zone)), round(l*(1-loss_zone/2))]
+            sep_positions = [round(size*(1-loss_zone)),
+                             round(size*(1-loss_zone/2))]
             loss_ratios = [1, math.ceil(loss_ratio/2), loss_ratio]
         # Производим отсеивание
         y_list_new = np.hstack([y_list[:sep_positions[0]:loss_ratios[0]],
@@ -247,8 +251,8 @@ class Statistic:
                              наконечника.
     :arg is_sharp_result: Вывод о том, что игла острая.
 
-    :method:'self.make_sharping_result()' метод для вынесения вердикта о тупости
-                            иглы по размеру самой иглы.
+    :method:'self.make_sharping_result()' метод для вынесения вердикта о
+                            тупости иглы по размеру самой иглы.
     """
     def __init__(self, sharpening_angle: float,
                        area_triangle: float,
@@ -268,7 +272,8 @@ class Statistic:
         :arg needle_height: высота иглы (в пикселях);
         :arg threshold: пороговое значение (в процентах).
         """
-        threshold_exceeding = self.length_missing_tip >= needle_height * threshold
+        threshold_exceeding = \
+                        self.length_missing_tip >= needle_height * threshold
         self.is_sharp_result = False if threshold_exceeding else True
 
 def build_contourline(contour: pd.DataFrame,
@@ -292,13 +297,15 @@ def build_contourline(contour: pd.DataFrame,
     # По х
     padding = 10
     x_max = needle["x"].max()
-    needle = needle.loc[(needle['x'] >= padding) & (needle['x'] <= (x_max - padding))]
+    needle = needle.loc[(needle['x'] >= padding) &
+                        (needle['x'] <= (x_max - padding))]
 
     # По Y
     q1 = needle["y"].quantile(0.25)
     q3 = needle["y"].quantile(0.75)
     iqr = q3 - q1
-    df_iqr = needle[(needle["y"] < (q1-1.5*iqr)) | (needle["y"] > (q3+1.5*iqr))]
+    df_iqr = needle[(needle["y"] < (q1-1.5*iqr)) |
+                    (needle["y"] > (q3+1.5*iqr))]
     df_iqr = df_iqr["y"]
 
     # Обрезаем нижние границы

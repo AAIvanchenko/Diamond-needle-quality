@@ -1,11 +1,15 @@
+"""
+Модуль, реализующий главное окно.
+"""
+
 import os
 from platform import system
 
 
 import numpy as np
 import pandas as pd
-from PyQt5.QtWidgets import QMessageBox, QInputDialog, QFileDialog, QMessageBox, QMainWindow
-from PyQt5.QtGui import QPixmap, QImage, QPainter, QPen, QBrush, QColor
+from PyQt5.QtWidgets import QFileDialog, QMessageBox, QMainWindow
+from PyQt5.QtGui import QPixmap, QImage, QPainter, QPen, QColor
 from PyQt5.QtCore import QSize, Qt
 
 
@@ -50,8 +54,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.setWindowTitle("Проверка качества алмазной иглы")
 
-        self.image_directory: String = self.take_home_path()
-        self.image_name_file: String = None
+        self.image_directory: str = self.take_home_path()
+        self.image_name_file: str = None
         self.row_image: np.ndarray = None
         self.ui_image: QImage = None
         self.contour: np.ndarray = None
@@ -78,7 +82,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.needle_boundaries_check.clicked.connect(self.update_ui_image)
         self.needle_line_check.clicked.connect(self.update_ui_image)
         self.sharpness_type.currentIndexChanged.connect(self.create_linear)
-        self.border_selection_type.currentIndexChanged.connect(self.create_linear)
+        self.border_selection_type.currentIndexChanged.connect(
+                                                        self.create_linear)
 
     def take_home_path(self) -> str:
         """
@@ -90,7 +95,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         home_path = ""
         system_name = system()
         if system_name == "Windows":
-             home_path = os.environ['HOMEPATH']
+            home_path = os.environ['HOMEPATH']
         return home_path
 
     def load_image_by_dialog(self):
@@ -137,7 +142,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Если чёрно-белая картинка
         elif len(image.shape) == 2:
             height, width = image.shape
-            bytesPerLine = width
+            bytes_per_line = width
             self.ui_image = QImage(image.data, width, height,
                                    bytes_per_line, QImage.Format_Mono)
 
@@ -205,9 +210,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 # Собеля
                 img = contour.filter_sobel(img)
         except Exception:
-            msg.setText("При применении фильтров возникла непредвиденная ошибка.\n\n" +
-                        "Пожалуйста, попробуйте ещё раз или возьмите другое изображение, " +
-                        "или измените выбранные фильтры.")
+            msg.setText("При применении фильтров возникла непредвиденная "+
+                        "ошибка.\n\nПожалуйста, попробуйте ещё раз или " +
+                        "возьмите другое изображение, или измените " +
+                        "выбранные фильтры.")
             msg.exec_()
             return
 
@@ -215,15 +221,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # Генерируем список точек границы
             contour_needle = contour.find_contour(img)
             contour_needle_max_point = contour.max_points(contour_needle)
-            df_points = pd.DataFrame(contour_needle_max_point, columns=["x", "y"])
+            df_points = pd.DataFrame(contour_needle_max_point,
+                                     columns=["x", "y"])
             self.contour = contour_needle_max_point
             # Находим линии, описывающие границы
             # try:
             self.linear = linear.build_contourline(df_points)
         except Exception:
-            msg.setText("C выбранными элементами фильтрации контуров не найдено.\n\n" +
-                        "Пожалуйста, попробуйте изменить выбранный фильтр выделения " +
-                        "границ или повышения резкости.")
+            msg.setText("C выбранными элементами фильтрации контуров не " +
+                        "найдено.\n\nПожалуйста, попробуйте изменить " +
+                        "выбранный фильтр выделения границ или повышения " +
+                        "резкости.")
             msg.exec_()
             self.update_ui_image()
             return
@@ -249,15 +257,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         length_missing_tip = self.linear.tip_perpendicular_length()
         # print("Длина тупости в px:", length_missing_tip)
         self.statistic = linear.Statistic(angle, area, length_missing_tip)
-        self.statistic.make_sharping_result(self.linear.horizontal_line.value(0))
+        self.statistic.make_sharping_result(
+                                self.linear.horizontal_line.value(0))
         # print("Острая ли игла?:", self.statistic.is_sharp_result)
 
         self.set_ui_statistic()
 
     def set_ui_statistic(self):
         """
-        Метод, отображабщий значения 'self.statistic' в полях пользовательского
-        интерфейса.
+        Метод, отображабщий значения 'self.statistic' в полях
+        пользовательского интерфейса.
 
         Отображает Statistic из 'self.statistic' в полях пользовательского
         интерфейса.
@@ -279,7 +288,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         painter = QPainter()
         painter.begin(self.ui_image)
         # Отрисовываем контур
-        if self.needle_boundaries_check.isChecked() and self.contour is not None:
+        if (self.needle_boundaries_check.isChecked() and
+            self.contour is not None):
             color = QColor(Qt.cyan)
             color.setAlphaF(0.5)
             painter.setPen(QPen(color, 5))
@@ -300,6 +310,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.set_diamond_image_ui()
 
     def export_result_image(self):
+        """
+        Метод, вызывающий '' для сохранения отоброжаемого изображения.
+
+        Метод вызывает метод модуля '' для сохранения отоброжаемого
+        изображения с заданными параметрами отображения.
+
+        :ref:''
+        """
         msg = QMessageBox()
         msg.setWindowTitle("Ошибка")
         msg.setIcon(QMessageBox.Warning)
@@ -310,14 +328,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             msg.exec_()
             return
 
-        intended_name = os.path.splitext(self.image_name_file)[0] + "_contour.jpg"
+        intended_name = os.path.splitext(self.image_name_file)[0] + \
+                                                                "_contour.jpg"
         file_path = QFileDialog.getSaveFileName(
                         self, "Экспорт отображаемого изображения иглы",
                         os.path.join(self.image_directory, intended_name),
                         "Image Files (*.png *.jpg)")[0]
 
         ext = os.path.splitext(file_path)[1]
-        if (ext != ".jpg") and (ext != ".png"):
+        if ext not in ('.jpg', '.png'):
             msg.setText("Указанное расширение файла не доступно.")
             msg.exec_()
             return
@@ -327,6 +346,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         pass
 
     def export_result_pdf(self):
+        """
+        Метод, вызывающий '' для генерации PDF отчёта о проделанной работе.
+
+        Метод вызывает метод модуля '' для генерации PDF отчёта о проделанной
+        работе на основе данных из 'self.statistic'.
+        Сохраняет дату генерации отчёта, отображаемое изображения, угол
+        заточки и вердикт о тупости иглы.
+
+        :ref:''
+        """
         msg = QMessageBox()
         msg.setWindowTitle("Ошибка")
         msg.setIcon(QMessageBox.Warning)
@@ -343,7 +372,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             msg.exec_()
             return
 
-        intended_name = os.path.splitext(self.image_name_file)[0] + "_report.pdf"
+        intended_name = os.path.splitext(self.image_name_file)[0] + \
+                                                                "_report.pdf"
         file_path = QFileDialog.getSaveFileName(
                         self, "Экспорт отчёта по текущему изображению иглы",
                         os.path.join(self.image_directory, intended_name),
@@ -359,7 +389,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         print(file_path)
         pass
 
-    def resizeEvent(self, event):
+    def resizeEvent(self, _):
         """
         Метод, отлавливающий событие изменения размеров окна.
 
