@@ -3,11 +3,11 @@
 Так же дополнительные функция для данной обработки.
 """
 
+from typing import Callable
+
 import numpy as np
 import cv2 as cv
-
 from matplotlib import pyplot as plt
-from collections.abc import Callable
 
 
 def draw_hist_gray(img_gray: np.ndarray) -> None:
@@ -19,8 +19,8 @@ def draw_hist_gray(img_gray: np.ndarray) -> None:
     height, weight = img_gray.shape[:]
     pixel_sequence = img_gray.reshape([height * weight, ])
     number_bins = 256
-    histogram, bins, patch = plt.hist(pixel_sequence, number_bins,
-                                      facecolor="black", histtype="bar")
+    histogram, _, _ = plt.hist(pixel_sequence, number_bins,
+                               facecolor="black", histtype="bar")
     plt.xlabel("Интенсивность серого")
     plt.ylabel("Количество пикселей")
     plt.axis([0, 255, 0, np.max(histogram)])
@@ -109,8 +109,10 @@ def filter_strong_clarity(img: np.ndarray) -> np.ndarray:
     return img_filter
 
 
-def selective_filter_clarity(filter_clarity: Callable[[np.ndarray], np.ndarray], img: np.ndarray,
-                             min_num_blur: int = 30) -> np.ndarray:
+def selective_filter_clarity(
+        filter_clarity: Callable[[np.ndarray], np.ndarray],
+        img: np.ndarray,
+        min_num_blur: int = 30) -> np.ndarray:
     """
     Выборочная фильтрацая изображений.
         У картинки будет повышаться резкость, если степень размыточти
@@ -127,9 +129,8 @@ def selective_filter_clarity(filter_clarity: Callable[[np.ndarray], np.ndarray],
     if num_blur < min_num_blur:
         filter_img = filter_clarity(img)
         return filter_img
-    else:
-        print("Фильтр не применился")
-        return img
+    print("Фильтр не применился")
+    return img
 
 
 def filter_bilateral(img: np.ndarray) -> np.ndarray:
@@ -140,7 +141,8 @@ def filter_bilateral(img: np.ndarray) -> np.ndarray:
 
     :return: Цветное изображение с примененным фильтром.
     """
-    diameter = 9  # Диаметр каждой окрестности пикселя, используемой во время фильтрации
+    # Диаметр каждой окрестности пикселя, используемой во время фильтрации
+    diameter = 9
     sigma_color = 75
     sigma_space = 75
     img_filter = cv.bilateralFilter(img, diameter, sigma_color, sigma_space)
@@ -187,5 +189,6 @@ def filter_add_weight(img: np.ndarray) -> np.ndarray:
     beta = -4
     gamma = 128
 
-    kernel = cv.addWeighted(img, alpha, filter_gaussian_blur(img), beta, gamma)
+    kernel = cv.addWeighted(img, alpha, filter_gaussian_blur(img),
+                            beta, gamma)
     return kernel
