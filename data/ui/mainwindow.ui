@@ -244,7 +244,7 @@
             </font>
            </property>
            <property name="text">
-            <string>Перетащите изображенние</string>
+            <string/>
            </property>
            <property name="scaledContents">
             <bool>false</bool>
@@ -444,17 +444,18 @@
     <addaction name="separator"/>
     <addaction name="export_meenu"/>
     <addaction name="separator"/>
-    <addaction name="restart"/>
-    <addaction name="separator"/>
     <addaction name="exit_action"/>
    </widget>
-   <widget class="QMenu" name="menu">
+   <widget class="QMenu" name="help_menu">
     <property name="title">
-     <string>Настройки</string>
+     <string>Справка</string>
     </property>
+    <addaction name="help_page"/>
+    <addaction name="separator"/>
+    <addaction name="about_page"/>
    </widget>
    <addaction name="file_menu"/>
-   <addaction name="menu"/>
+   <addaction name="help_menu"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="import_img">
@@ -500,6 +501,21 @@
   <action name="exit_action">
    <property name="text">
     <string>Выход</string>
+   </property>
+  </action>
+  <action name="help_page">
+   <property name="text">
+    <string>Справка</string>
+   </property>
+  </action>
+  <action name="info_page">
+   <property name="text">
+    <string>О программе</string>
+   </property>
+  </action>
+  <action name="about_page">
+   <property name="text">
+    <string>О программе</string>
    </property>
   </action>
  </widget>

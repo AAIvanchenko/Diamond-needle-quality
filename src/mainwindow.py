@@ -10,14 +10,15 @@ import numpy as np
 import pandas as pd
 from PyQt5.QtWidgets import QFileDialog, QMessageBox, QMainWindow
 from PyQt5.QtGui import QPixmap, QImage, QPainter, QPen, QColor
-from PyQt5.QtCore import QSize, Qt
+from PyQt5.QtCore import QSize, Qt, Q_FLAGS
 
 
 import contour
 import linear
 import imageproc
 from ui_mainwindow import Ui_MainWindow
-
+from about_dialog import AboutDialog
+from generation_pdf import create_pdf
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     """
@@ -84,6 +85,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.sharpness_type.currentIndexChanged.connect(self.create_linear)
         self.border_selection_type.currentIndexChanged.connect(
                                                         self.create_linear)
+        self.help_page.triggered.connect(self.open_help)
+        self.about_page.triggered.connect(self.open_about_dialog)
 
     def take_home_path(self) -> str:
         """
@@ -341,9 +344,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             msg.exec_()
             return
 
-        # Код, который запускает
-        print(file_path)
-        pass
+        # Код, который запускает сохранение
+        if ext == '.jpg':
+            self.ui_image.save(file_path, "JPG")
+        else:
+            self.ui_image.save(file_path, "PNG")
 
     def export_result_pdf(self):
         """
@@ -386,8 +391,25 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             return
 
         # Код, который запускает
-        print(file_path)
-        pass
+        result = "Острая" if self.statistic.is_sharp_result else "Сточенная"
+        create_pdf(file_path, self.ui_image, self.statistic.angle, result)
+
+    def open_help(self):
+        """
+        Метод, открывающий справку о программе.
+
+        Метод, открывающий справку о программе, находащуюся в файле help.chm.
+        """
+        help_path = os.path.abspath('resourse\help.chm')
+        os.system("hh.exe " + help_path)
+
+    def open_about_dialog(self):
+        """
+        Метод открытия окна "О программе"
+        """
+        self.about = AboutDialog(flags=Q_FLAGS())
+        self.about.show()
+
 
     def resizeEvent(self, _):
         """

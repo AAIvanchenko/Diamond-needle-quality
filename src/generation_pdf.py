@@ -28,7 +28,7 @@ class CustomPdf(FPDF):
         Задание стиля для шапки файла.
         """
         self.add_font('DejaVuSerif-Bold', '',
-                      '..//font//DejaVuSerif-Bold.ttf',
+                      os.path.abspath('font\DejaVuSerif-Bold.ttf'),
                       uni=True)
         self.set_font('DejaVuSerif-Bold', '', self.font_size)
         self.cell(0, self.text_step, 'Отчет.',
@@ -68,7 +68,7 @@ def font_text(pdf: Type[CustomPdf]) -> None:
     """
     font_size = 14
     pdf.add_font('DejaVuSerif', '',
-                 '..//font//DejaVuSerif.ttf',
+                 os.path.abspath('font\DejaVuSerif.ttf'),
                  uni=True)
     pdf.set_font('DejaVuSerif', '', font_size)
 
