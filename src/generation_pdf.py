@@ -9,6 +9,7 @@ from typing import Type, Union
 from PyQt5.QtGui import QImage
 from fpdf import FPDF
 
+from resource import resource_path
 
 class CustomPdf(FPDF):
     """
@@ -28,7 +29,7 @@ class CustomPdf(FPDF):
         Задание стиля для шапки файла.
         """
         self.add_font('DejaVuSerif-Bold', '',
-                      '..//font//DejaVuSerif-Bold.ttf',
+                      resource_path('font\DejaVuSerif-Bold.ttf'),
                       uni=True)
         self.set_font('DejaVuSerif-Bold', '', self.font_size)
         self.cell(0, self.text_step, 'Отчет.',
@@ -68,7 +69,7 @@ def font_text(pdf: Type[CustomPdf]) -> None:
     """
     font_size = 14
     pdf.add_font('DejaVuSerif', '',
-                 '..//font//DejaVuSerif.ttf',
+                 resource_path('font\DejaVuSerif.ttf'),
                  uni=True)
     pdf.set_font('DejaVuSerif', '', font_size)
 
