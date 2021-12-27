@@ -3,6 +3,7 @@ import os
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import QApplication
 
+from resource import resource_path
 
 class UiAboutDialog(object):
     def setup_ui(self, AboutDialog):
@@ -110,7 +111,7 @@ class UiAboutDialog(object):
         self.label_3.setText(_translate("AboutDialog", "Copyright (c) 2021 AAIvanchenko"))
         self.version_string.setText(_translate("AboutDialog", "Версия v0.2"))
 
-        path_to_license = os.path.abspath("resourse\license.html")
+        path_to_license = resource_path("resourse\license.html")
         with open(path_to_license, 'r') as f:
             license_html = f.read()
         self.textBrowser.setHtml(_translate("AboutDialog", license_html))

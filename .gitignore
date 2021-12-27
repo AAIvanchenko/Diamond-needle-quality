@@ -10,7 +10,6 @@ __pycache__/
 .Python
 build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/
@@ -135,3 +134,8 @@ dmypy.json
 row_dataset
 venv
 .idea
+
+# Pyinstaller
+*.spec
+build
+dist

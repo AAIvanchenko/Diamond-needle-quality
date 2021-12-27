@@ -19,6 +19,7 @@ import imageproc
 from ui_mainwindow import Ui_MainWindow
 from about_dialog import AboutDialog
 from generation_pdf import create_pdf
+from resource import resource_path
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     """
@@ -400,7 +401,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         Метод, открывающий справку о программе, находащуюся в файле help.chm.
         """
-        help_path = os.path.abspath('resourse\help.chm')
+        help_path = resource_path('resourse/help.chm')
         os.system("hh.exe " + help_path)
 
     def open_about_dialog(self):
